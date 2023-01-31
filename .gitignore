@@ -35,4 +35,4 @@ lerna-debug.log*
 !.vscode/extensions.json
 
 src/sendgrid.env
-src/.env
+*.env
