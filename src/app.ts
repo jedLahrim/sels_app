@@ -1,24 +1,24 @@
-import express, { request, Request, response, Response } from 'express';
 import 'reflect-metadata';
-import { DataSource } from 'typeorm';
 import dataSource_config from './config/config';
 import * as bodyParser from 'body-parser';
-import { body, param, query, validationResult } from 'express-validator';
+import { validationResult } from 'express-validator';
 import routes from './router/routes';
 import morgan from 'morgan';
 import cors from 'cors';
 import { createConnection } from 'typeorm';
 import { ConfigModule } from '@nestjs/config';
-import multer from 'multer';
-import { AuthGuard, PassportModule } from '@nestjs/passport';
-import { APP_GUARD } from '@nestjs/core';
+import passport from 'passport';
+import { GoogleStrategy } from './jwt/google.strategy';
+import { FacebookStrategy } from './jwt/facebook.strategy';
+import { TwitterStrategy } from './jwt/twitter.strategy';
+import express, { Request, Response } from 'express';
 
 ConfigModule.forRoot({
   envFilePath: '.env',
   isGlobal: true,
 });
 require('dotenv').config({ path: '.env', debug: true });
-function handleError(err, _req, res, _next) {
+function handleError(err, req, res) {
   res.status(err.statusCode || 500).send(err.message);
 }
 let app = express();
@@ -29,7 +29,10 @@ app.use(bodyParser.json());
 app.use(express.json());
 // use cors
 app.use(cors());
-
+passport.use(new FacebookStrategy());
+passport.use(new GoogleStrategy());
+passport.use(new TwitterStrategy());
+app.use(passport.initialize());
 // use router
 // app.use(router);
 const port = 4060;
@@ -42,41 +45,25 @@ routes.forEach((route) => {
     route.route,
     ...route.validation,
     async (req: Request, res: Response, next?: Function) => {
-      try {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-          return res.status(400).json({ errors: errors.array() });
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+      }
+      console.log(route.strategy);
+      console.log(route.guard);
+      if (!route.strategy) {
+        return await new (route.service as any)()[route.action](req, res, next);
+      } else {
+        const authorization = await new (route.strategy as any)()[route.guard](
+          req,
+          res,
+          next,
+        );
+        if (authorization.statusMessage === 'Unauthorized') {
+          return authorization;
         }
-
-        console.log(route.strategy);
-        console.log(route.guard);
-        if (!route.strategy) {
-          const result0 = await new (route.service as any)()[route.action](
-            req,
-            res,
-            next,
-          );
-          // res.json(result0);
-        } else {
-          const result = await new (route.strategy as any)()[route.guard](
-            req,
-            res,
-            next,
-          );
-          if (result.statusMessage === 'Unauthorized') {
-            return res
-              .status(401)
-              .json({ UnauthorizedException: 'Unauthorized' });
-          }
-          const result2 = await new (route.service as any)()[route.action](
-            req,
-            res,
-            next,
-          );
-          // res.json({ result, result2 });
-        }
-      } catch (err) {
-        next(err);
+        await new (route.service as any)()[route.action](req, res, next);
+        // res.json({ result, result2 });
       }
     },
   );

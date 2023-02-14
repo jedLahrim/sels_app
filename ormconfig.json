@@ -2,9 +2,9 @@
    "type": "postgres",
    "host": "localhost",
    "port": 8884,
-   "username": "postgres",
-   "password": "postgres",
-   "database": "postgres",
+   "username": "joli007",
+   "password": "jedLa",
+   "database": "joli007",
    "synchronize": true,
    "logging": false,
    "entities": [

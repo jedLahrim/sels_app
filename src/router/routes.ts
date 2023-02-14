@@ -2,9 +2,9 @@ import { body, param, query } from 'express-validator';
 import { UserService } from '../services/user.service';
 import { upload } from '../upload/upload.config';
 import { EmailSchedulingService } from '../services/email-scheduling.service';
-import { UseGuards } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
 import { JwtStrategy } from '../jwt/jwt.strategy';
+import passport from 'passport';
+
 const routes = [
   {
     method: 'get',
@@ -87,6 +87,55 @@ const routes = [
       body('password').isString(),
       // passport.authenticate('Jwt', { session: false }),
     ],
+  },
+  {
+    method: 'get',
+    route: '/user/facebook',
+    service: UserService,
+    action: 'loginWithFacebook',
+    validation: [passport.authenticate('facebook')],
+  },
+  {
+    method: 'get',
+    route: '/user/facebook/callback',
+    service: UserService,
+    action: 'callback',
+    validation: [],
+  },
+  {
+    method: 'get',
+    route: '/user/google',
+    service: UserService,
+    action: 'loginWithGoogle',
+    validation: [passport.authenticate('google')],
+  },
+  {
+    method: 'get',
+    route: '/user/google/callback',
+    service: UserService,
+    action: 'callbacks',
+    validation: [],
+  },
+  {
+    method: 'get',
+    route: '/user/twitter',
+    service: UserService,
+    action: 'loginWithTwitter',
+    validation: [passport.authenticate('twitter')],
+  },
+  {
+    method: 'get',
+    route: '/user/twitter/callback',
+    service: UserService,
+    action: 'twitterCallback',
+    validation: [],
+  },
+  {
+    method: 'get',
+    route: '/user/getCodeQR',
+    service: UserService,
+    action: 'generateQRCode',
+    validation: [],
   },
 ];
 export default routes;

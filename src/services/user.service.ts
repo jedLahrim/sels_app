@@ -20,10 +20,13 @@ import {
   EMAIL_OR_PASSWORD_IS_INCORRECT,
   ERR_NOT_FOUND_USER,
   THIS_TYPE_OF_FILE_IS_NOT_A_VIDEO_TYPE,
+  USER_DELETED_SUCCESSFULLY,
 } from '../commons/errors/errors-codes';
 express();
 import * as bcrypt from 'bcrypt';
 import * as jwt from 'jsonwebtoken';
+import passport from 'passport';
+import * as qrcode from 'qrcode';
 export class UserService {
   private userRepo = getRepository<User>(User);
   private mediaRepo = getRepository<Media>(Media);
@@ -34,12 +37,16 @@ export class UserService {
   }
 
   async findOne(req: Request, res: Response) {
-    const id = req.params.id;
-    const user = await this.userRepo.findOneBy({ id });
-    if (user == null) {
-      throw new NotFoundException('ERR_NOT_FOUND_BROWSER_SERVICE');
+    try {
+      const id = req.params.id;
+      const user = await this.userRepo.findOneBy({ id });
+      if (user == null) {
+        return res.status(404).json({ NotFoundException: ERR_NOT_FOUND_USER });
+      }
+      res.json(user);
+    } catch (e) {
+      return res.status(401).json({ NotFoundException: ERR_NOT_FOUND_USER });
     }
-    res.json(user);
   }
 
   //add user
@@ -101,6 +108,51 @@ export class UserService {
     return token;
   }
 
+  loginWithFacebook() {}
+
+  async callback(req, res) {
+    try {
+      // logic dyaL on failure
+      passport.authenticate('facebook', { failureRedirect: '/login' });
+      // Successful authentication, redirect home.
+      res.redirect('https://www.facebook.com');
+    } catch (e) {
+      res.status(501).json('INTERNAL_SERVER_ERR');
+    }
+  }
+  loginWithGoogle() {}
+
+  callbacks(req, res) {
+    try {
+      // logic dyaL on failure
+      passport.authenticate('facebook', { failureRedirect: '/login' });
+      // Successful authentication, redirect home.
+      res.redirect('https://mail.google.com');
+    } catch (e) {
+      res.status(501).json('INTERNAL_SERVER_ERR');
+    }
+  }
+
+  loginWithTwitter() {}
+  twitterCallback(req, res) {
+    try {
+      // logic dyaL on failure
+      passport.authenticate('facebook', { failureRedirect: '/login' });
+      // Successful authentication, redirect home.
+      res.redirect('https://twitter.com/home');
+    } catch (e) {
+      res.status(501).json('INTERNAL_SERVER_ERR');
+    }
+  }
+  async generateQRCode(res: Response) {
+    try {
+      const qrCode = qrcode.toDataURL('im a pony');
+      console.log(qrCode);
+      res.status(200).send(qrCode);
+    } catch (error) {
+      res.status(500).send(error);
+    }
+  }
   // upload file
   async upload(req: Request, res: Response) {
     console.log(req.file);
@@ -163,6 +215,18 @@ export class UserService {
     return path.extname(filePath);
   }
   async uploadFile(req, res) {
+    // upside pyramid pattern in javascript
+    const n = 5;
+    for (let i = 1; i <= n; i++) {
+      for (let j = 1; j <= n - i; j++) {
+        process.stdout.write(' ');
+      }
+      for (let k = 0; k < 2 * i - 1; k++) {
+        process.stdout.write('*');
+      }
+      console.log();
+    }
+
     // await this._verifyToken(req, res);
     // req.file is the uploaded file
     // req.body will hold the text fields, if there were any
@@ -235,12 +299,13 @@ export class UserService {
   }
   async remove(req, res): Promise<void> {
     const id = req.params.id;
-    const result = await this.userRepo.delete({ id });
+    const result = await this.userRepo.delete({ id: id });
+    console.log(result);
     if (result.affected === 0) {
-      return res.status(401).json({
+      return res.status(404).json({
         code: ERR_NOT_FOUND_USER,
       });
     }
-    return;
+    res.json({ code: USER_DELETED_SUCCESSFULLY });
   }
 }

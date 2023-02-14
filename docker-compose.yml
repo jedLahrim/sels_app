@@ -3,7 +3,7 @@ services:
   postgres:
     image: postgres
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: joli007
+      POSTGRES_PASSWORD: jedLa
     ports:
       - "8884:5432"

@@ -12,22 +12,28 @@ import * as jwt from 'jsonwebtoken';
 
 @Injectable()
 export class EmailSchedulingService {
-  constructor(
-    private readonly mailerService: MailerService,
-    private readonly schedulerRegistry: SchedulerRegistry,
-  ) {}
+  constructor() {}
 
   // @Cron('0 30 11 * * 6,7') //  11:30:00 on Saturday, and Sunday,
   // log() {
   //   console.log('Hello world!');
   // }
 
-  async scheduleEmail(req: Request, res: Response): Promise<any> {
+  async scheduleEmail(req: Request, res: Response): Promise<void> {
+    // used spread operator here
+    // "a"
+    // "b"
+    // ["c", "d", "e", “f”]
+    // 0 10,44 14 ? 3 WED
+    // 2:10 pm and at 2:44 pm every Wednesday in the month of March.
+
+    // 0 15 10 ? * MON-FRI
+    // 10:15 am every Monday, Tuesday, Wednesday, Thursday and Friday
     const client = mailgun({ domain: '', apiKey: '' });
     // const client = require('mailgun-js')({ domain: '', apiKey: '' });
     const { recipient, subject, content } = req.body;
     // create a transporter object to send emails
-    const job = schedule('0 30 11 * * 7', async () => {
+    const job = schedule('0 17 * * *', async () => {
       await client.messages().send({
         to: recipient,
         from: 'Contact@boostifly.com',
@@ -43,24 +49,12 @@ export class EmailSchedulingService {
     // );
     job.start();
   }
-  async sendMail(req: Request, res: Response) {
-    const { recipient, subject, content } = req.body;
-    // create a transporter object to send emails
-    let transporter = nodemailer.createTransport({
-      host: 'smtp.sendgrid.net',
-      auth: {
-        user: 'apikey',
-        pass: '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',
-      },
-    });
+  cron() {
+    const cron = require('cron');
 
-    await transporter.sendMail({
-      to: recipient,
-      from: 'Contact@boostifly.com',
-      subject: subject,
-      text: content,
-      sender: 'Contact@boostifly.com',
-      //html: `Click <a href="${url}">here</a> to activate your account !`,
+    const job = new cron.CronJob('0 0 * * *', function () {
+      console.log('Running a job at midnight every day');
     });
+    job.start();
   }
 }
