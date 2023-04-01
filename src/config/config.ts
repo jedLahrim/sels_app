@@ -7,7 +7,7 @@ const dataSource_config: DataSourceOptions = {
   username: 'joli007',
   password: 'jedLa',
   database: 'joli007',
-  entities: ['src/entities/*{.ts,.js}'],
+  entities: ['src/entities/*.ts'],
   synchronize: true,
   logging: true,
 };
